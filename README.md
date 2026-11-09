@@ -40,8 +40,8 @@ The playbook is safe to run again on a built cluster: `kubeadm init` is skipped 
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/raslenraslen/kubernetes-ansible-roles.git
-cd kubernetes-ansible-roles/cluster-k8s
+git clone https://github.com/raslenraslen/ansible-kubeadm-cluster.git
+cd ansible-kubeadm-cluster/cluster-k8s
 ```
 
 **2. Describe your nodes in `inventory.ini`**
