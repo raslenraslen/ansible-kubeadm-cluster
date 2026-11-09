@@ -16,6 +16,14 @@ flowchart LR
     A -- SSH --> W["worker1 ... workerN<br/>kubeadm join"]
     C -- "join command, fetched to<br/>Remote_Files/" --> A
     W -. joins .-> C
+
+    classDef client fill:#8957e5,stroke:#a371f7,color:#ffffff,stroke-width:2px
+    classDef controller fill:#238636,stroke:#3fb950,color:#ffffff,stroke-width:2px
+    classDef app fill:#bd561d,stroke:#f0883e,color:#ffffff,stroke-width:2px
+    class A client
+    class C controller
+    class W app
+    linkStyle default stroke:#8b949e,stroke-width:2px
 ```
 
 `site.yml` applies the `kubernetes_cluster` role to every host. The role runs three task files, chosen by inventory group:
