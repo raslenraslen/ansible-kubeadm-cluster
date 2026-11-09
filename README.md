@@ -8,18 +8,6 @@
 
 An Ansible role that builds a Kubernetes 1.28 cluster with kubeadm on Ubuntu machines: one control plane node and any number of workers, from bare OS to `Ready` nodes in one command. It also covers adding workers later and tearing the cluster down.
 
-## Contents
-
-- [How it works](#how-it-works)
-- [Repository layout](#repository-layout)
-- [Requirements](#requirements)
-- [Quick start](#quick-start)
-- [Add workers to a running cluster](#add-workers-to-a-running-cluster)
-- [Reset the cluster](#reset-the-cluster)
-- [Configuration](#configuration)
-- [Design choices](#design-choices)
-- [Limitations](#limitations)
-
 ## How it works
 
 ```mermaid
@@ -40,46 +28,12 @@ flowchart LR
 
 The playbook is safe to run again on a built cluster: `kubeadm init` is skipped when `/etc/kubernetes/admin.conf` exists, and the join is skipped when `/etc/kubernetes/kubelet.conf` exists.
 
-## Repository layout
-
-```text
-.
-├── ansible-install/
-│   └── steps.sh                  # installs Ansible on the control node
-├── cluster-k8s/
-│   ├── inventory.ini             # your nodes
-│   ├── requirements.yml          # Ansible collections needed
-│   ├── site.yml                  # builds the cluster
-│   ├── reset.yml                 # tears the cluster down
-│   ├── Remote_Files/             # join command, written at runtime (git-ignored)
-│   └── roles/kubernetes_cluster/
-│       ├── defaults/main.yml     # versions and pod CIDR
-│       ├── vars/main.yml         # package lists
-│       ├── handlers/main.yml     # containerd restart
-│       ├── templates/k8s_worker_node_connection.j2
-│       └── tasks/
-│           ├── main.yml          # picks the task files below
-│           ├── prerequisites.yml
-│           ├── master.yml
-│           └── worker.yml
-└── Screenshots/
-```
-
 ## Requirements
 
-**Cluster nodes**
-
-- Ubuntu 22.04 or 24.04 LTS, at least 2 CPUs and 2 GB RAM each (kubeadm minimum, 4 GB recommended for the controller).
-- A unique hostname per node.
-- Internet access to `pkgs.k8s.io`, `registry.k8s.io`, `github.com` and `ghcr.io`.
-- A user that the control node can reach over SSH with a key, and that can use `sudo` without a password. Otherwise add `-K` to every `ansible-playbook` command to type the sudo password.
-
-**Control node** (the machine you run Ansible from)
-
-- Ansible 2.10 or newer, with the `community.general` collection. The full `ansible` package already includes it. With `ansible-core` only, run `ansible-galaxy collection install -r requirements.yml` from `cluster-k8s/`.
-- The SSH private key set in `inventory.ini` (`~/.ssh/id_rsa` by default).
-
-On Ubuntu, `ansible-install/steps.sh` installs Ansible and gives the current user passwordless sudo.
+- **Nodes:** Ubuntu 22.04 or 24.04 LTS, 2 CPUs and 2 GB RAM minimum (4 GB recommended for the controller), a unique hostname each, and internet access to `pkgs.k8s.io`, `registry.k8s.io`, `github.com` and `ghcr.io`.
+- **Access:** SSH with a key from the control node, and passwordless `sudo` on the nodes. Otherwise add `-K` to each `ansible-playbook` command.
+- **Control node:** Ansible 2.10 or newer with the `community.general` collection. The full `ansible` package includes it; with `ansible-core` only, run `ansible-galaxy collection install -r requirements.yml` from `cluster-k8s/`.
+- **Shortcut:** on Ubuntu, `ansible-install/steps.sh` installs Ansible and gives the current user passwordless sudo.
 
 ## Quick start
 
@@ -95,10 +49,6 @@ cd kubernetes-ansible-roles/cluster-k8s
 Put one host in `[controllers]` and one or more in `[workers]`. Set `ansible_host` to the node IP and `ansible_user` to the SSH user.
 
 ```ini
-[all:vars]
-ansible_ssh_private_key_file=~/.ssh/id_rsa
-ansible_ssh_common_args="-o ControlPath=/tmp/ssh_mux_%h_%p_%r"
-
 [controllers]
 controller1 ansible_host=192.168.216.142 ansible_user=raslen
 
