@@ -1,0 +1,26 @@
+---
+# Destroys the cluster on every host in the inventory (or in --limit).
+# Packages stay installed, so site.yml can rebuild the cluster right after.
+- name: Reset Kubernetes Cluster
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Reset kubeadm state
+      ansible.builtin.command: kubeadm reset -f
+      args:
+        removes: /etc/kubernetes
+
+    - name: Remove cluster files left by kubeadm reset
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes
+        - /var/lib/etcd
+        - /etc/cni/net.d
+
+    - name: Remove the admin kubeconfig
+      ansible.builtin.file:
+        path: .kube/config
+        state: absent

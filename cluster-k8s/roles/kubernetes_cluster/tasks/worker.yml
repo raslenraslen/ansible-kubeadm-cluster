@@ -1,6 +1,7 @@
 ---
+# kubelet.conf exists once the node has joined, so a re-run skips the join.
 - name: 1. Add Worker Nodes To The Controller
-  
   ansible.builtin.command: "{{ lookup('ansible.builtin.file', 'Remote_Files/worker_conn_string') }}"
-  changed_when: false
+  args:
+    creates: /etc/kubernetes/kubelet.conf
   throttle: 1

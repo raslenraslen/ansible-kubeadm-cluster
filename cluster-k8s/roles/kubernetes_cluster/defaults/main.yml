@@ -1,0 +1,10 @@
+---
+# Kubernetes minor version, used for the pkgs.k8s.io apt repository.
+kube_version: "1.28"
+
+# Must match the "Network" value in the Flannel manifest (10.244.0.0/16 by default).
+pod_network_cidr: "10.244.0.0/16"
+
+# Pinned Flannel release, so a new upstream manifest cannot change the cluster.
+flannel_version: "v0.27.3"
+flannel_manifest_url: "https://github.com/flannel-io/flannel/releases/download/{{ flannel_version }}/kube-flannel.yml"

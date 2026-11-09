@@ -49,8 +49,7 @@
   ansible.builtin.shell: |
     set -o pipefail
     containerd config default | sudo tee /etc/containerd/config.toml
-  register: output
-  changed_when: output.rc != 0
+  changed_when: true
   args:
     executable: /bin/bash
   tags:
@@ -70,9 +69,9 @@
     - containerd_config
 
 - name: 8.1 Disable Swap
-  ansible.builtin.command: sudo swapoff -a
-  register: output
-  changed_when: output.rc != 0
+  ansible.builtin.command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  changed_when: true
   tags:
     - disable_swap
 
@@ -93,12 +92,12 @@
       br_netfilter
 
 - name: Load kernel module overlay
-  ansible.builtin.modprobe:
+  community.general.modprobe:
     name: overlay
     state: present
 
 - name: Load kernel module br_netfilter
-  ansible.builtin.modprobe:
+  community.general.modprobe:
     name: br_netfilter
     state: present
 
@@ -113,6 +112,7 @@
 
 - name: Apply sysctl params without reboot
   ansible.builtin.command: sysctl --system
+  changed_when: false
 
 - name: 9. Edit config.toml
   ansible.builtin.replace:
@@ -176,7 +176,7 @@
 
 - name: 13.5 Download Kubernetes APT Key
   ansible.builtin.get_url:
-    url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
+    url: https://pkgs.k8s.io/core:/stable:/v{{ kube_version }}/deb/Release.key
     dest: /usr/share/keyrings/kubernetes-apt-keyring.gpg_armored
     mode: '0755'
   tags:
@@ -190,15 +190,11 @@
   tags:
     - install_pre_kube_packages
 
-- name: 13.7 Add Kubernetes APT Key
-  ansible.builtin.shell: |
-    set -o pipefail
-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' \
-    | sudo tee /etc/apt/sources.list.d/kubernetes.list
-  register: apt_output
-  changed_when: apt_output.rc != 0
-  args:
-    executable: /bin/bash
+- name: 13.7 Add Kubernetes APT Repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kube_version }}/deb/ /\n"
+    mode: '0644'
   tags:
     - install_pre_kube_packages
 

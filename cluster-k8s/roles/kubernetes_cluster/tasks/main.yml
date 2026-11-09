@@ -1,11 +1,18 @@
 ---
+# "always" lets --tags reach the tasks inside these dynamic includes.
 - name: Ensure common prerequisites for all Kubernetes nodes are met
   ansible.builtin.include_tasks: prerequisites.yml
+  tags:
+    - always
 
 - name: Configure Kubernetes master node
   ansible.builtin.include_tasks: master.yml
   when: inventory_hostname in groups['controllers']
+  tags:
+    - always
 
 - name: Configure Kubernetes worker node to join cluster
   ansible.builtin.include_tasks: worker.yml
   when: inventory_hostname in groups['workers']
+  tags:
+    - always

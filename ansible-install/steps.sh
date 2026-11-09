@@ -1,15 +1,15 @@
 #!/bin/bash
+# Installs Ansible on the control node (Ubuntu) and gives the current user passwordless sudo.
 
-# Ajouter le PPA d'Ansible
+# Add the official Ansible PPA
 sudo apt-add-repository ppa:ansible/ansible -y
 
-# Mettre à jour les informations des paquets
+# Refresh the package index
 sudo apt update
 
-# Installer Ansible
+# Install Ansible (includes the community.general collection)
 sudo apt install ansible -y
-echo "raslen ALL=(ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
+echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo
 
-
-# Vérifier l'installation
+# Check the installation
 ansible --version

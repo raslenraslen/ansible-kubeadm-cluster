@@ -1,0 +1,3 @@
+# Join command fetched from the controller at runtime (contains a bootstrap token)
+cluster-k8s/Remote_Files/*
+!cluster-k8s/Remote_Files/.gitkeep

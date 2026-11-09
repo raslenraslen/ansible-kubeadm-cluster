@@ -1,12 +1,14 @@
 ---
+# admin.conf exists once the cluster is initialized, so a re-run skips kubeadm init.
 - name: 1. Initialize Cluster
   ansible.builtin.shell: |
     set -o pipefail
-    sudo kubeadm init --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }} --pod-network-cidr=10.244.0.0/16
+    sudo kubeadm init --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }} --pod-network-cidr={{ pod_network_cidr }}
   register: init_cluster_output
-  changed_when: init_cluster_output.rc != 0
+  changed_when: true
   args:
     executable: /bin/bash
+    creates: /etc/kubernetes/admin.conf
 
 - name: 2.1 Create .kube Directory
   ansible.builtin.file:
@@ -33,14 +35,10 @@
     - kube_admin_config
 
 - name: 3. Install An Overlay Network
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-  register: init_cluster_output
+  ansible.builtin.command: kubectl apply -f {{ flannel_manifest_url }}
+  register: flannel_apply
   become: false
-  changed_when: init_cluster_output.rc != 0
-  args:
-    executable: /bin/bash
+  changed_when: "'created' in flannel_apply.stdout or 'configured' in flannel_apply.stdout"
 
 - name: 4.1 Execute Join String Generation Command
   ansible.builtin.command: kubeadm token create --print-join-command
@@ -58,14 +56,18 @@
 
 - name: Copy Connection String To A Remote File
   ansible.builtin.template:
-    src: k8s_worker_node_connection.j2 
+    src: k8s_worker_node_connection.j2
     dest: worker_conn_string
-    mode: '0755'
+    mode: '0600'
+  tags:
+    - join_string
 
 - name: Check Connection String File Exists
   ansible.builtin.stat:
     path: worker_conn_string
   register: conn_file_path_remote
+  tags:
+    - join_string
 
 - name: Fetch The Remote File
   ansible.builtin.fetch:
@@ -73,3 +75,5 @@
     dest: Remote_Files/worker_conn_string
     flat: true
   when: conn_file_path_remote.stat.exists
+  tags:
+    - join_string
